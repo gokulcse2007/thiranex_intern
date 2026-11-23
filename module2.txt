@@ -1,0 +1,400 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <limits>
+
+using namespace std;
+
+// Book Class
+class Book
+{
+public:
+    int id;
+    string title;
+    string author;
+    int issuedTo;
+};
+
+// Member Class
+class Member
+{
+public:
+    int id;
+    string name;
+};
+
+// Load Books
+vector<Book> loadBooks()
+{
+    vector<Book> books;
+    ifstream file("books.txt");
+
+    string line;
+
+    while (getline(file, line))
+    {
+        stringstream ss(line);
+        Book b;
+        string id, issued;
+
+        getline(ss, id, '|');
+        getline(ss, b.title, '|');
+        getline(ss, b.author, '|');
+        getline(ss, issued, '|');
+
+        try
+        {
+            b.id = stoi(id);
+            b.issuedTo = stoi(issued);
+            books.push_back(b);
+        }
+        catch (...)
+        {
+            continue;
+        }
+    }
+
+    return books;
+}
+
+// Save Books
+void saveBooks(vector<Book> books)
+{
+    ofstream file("books.txt");
+
+    for (int i = 0; i < books.size(); i++)
+    {
+        file << books[i].id << "|"
+             << books[i].title << "|"
+             << books[i].author << "|"
+             << books[i].issuedTo << endl;
+    }
+
+    file.close();
+}
+
+// Load Members
+vector<Member> loadMembers()
+{
+    vector<Member> members;
+    ifstream file("members.txt");
+
+    string line;
+
+    while (getline(file, line))
+    {
+        stringstream ss(line);
+        Member m;
+        string id;
+
+        getline(ss, id, '|');
+        getline(ss, m.name, '|');
+
+        try
+        {
+            m.id = stoi(id);
+            members.push_back(m);
+        }
+        catch (...)
+        {
+            continue;
+        }
+    }
+
+    return members;
+}
+
+// Save Members
+void saveMembers(vector<Member> members)
+{
+    ofstream file("members.txt");
+
+    for (int i = 0; i < members.size(); i++)
+    {
+        file << members[i].id << "|"
+             << members[i].name << endl;
+    }
+
+    file.close();
+}
+
+// Add Book
+void addBook()
+{
+    vector<Book> books = loadBooks();
+
+    Book b;
+
+    cout << "\nEnter Book ID: ";
+    cin >> b.id;
+
+    for (int i = 0; i < books.size(); i++)
+    {
+        if (books[i].id == b.id)
+        {
+            cout << "Book ID already exists!\n";
+            return;
+        }
+    }
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    cout << "Enter Book Title: ";
+    getline(cin, b.title);
+
+    cout << "Enter Author Name: ";
+    getline(cin, b.author);
+
+    b.issuedTo = 0;
+
+    books.push_back(b);
+
+    saveBooks(books);
+
+    cout << "\nBook Added Successfully!\n";
+}
+
+// Add Member
+void addMember()
+{
+    vector<Member> members = loadMembers();
+
+    Member m;
+
+    cout << "\nEnter Member ID: ";
+    cin >> m.id;
+
+    for (int i = 0; i < members.size(); i++)
+    {
+        if (members[i].id == m.id)
+        {
+            cout << "Member ID already exists!\n";
+            return;
+        }
+    }
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    cout << "Enter Member Name: ";
+    getline(cin, m.name);
+
+    members.push_back(m);
+
+    saveMembers(members);
+
+    cout << "\nMember Added Successfully!\n";
+}
+
+// Display Books
+void displayBooks()
+{
+    vector<Book> books = loadBooks();
+
+    if (books.empty())
+    {
+        cout << "\nNo Books Available!\n";
+        return;
+    }
+
+    cout << "\n========== BOOK DETAILS ==========\n";
+
+    for (int i = 0; i < books.size(); i++)
+    {
+        cout << "\nBook ID: " << books[i].id;
+        cout << "\nTitle: " << books[i].title;
+        cout << "\nAuthor: " << books[i].author;
+
+        if (books[i].issuedTo == 0)
+            cout << "\nStatus: Available";
+        else
+            cout << "\nIssued To Member ID: "
+                 << books[i].issuedTo;
+
+        cout << "\n----------------------------------\n";
+    }
+}
+
+// Issue Book
+void issueBook()
+{
+    vector<Book> books = loadBooks();
+    vector<Member> members = loadMembers();
+
+    int bookID, memberID;
+    bool bookFound = false;
+    bool memberFound = false;
+
+    cout << "\nEnter Book ID: ";
+    cin >> bookID;
+
+    cout << "Enter Member ID: ";
+    cin >> memberID;
+
+    for (int i = 0; i < members.size(); i++)
+    {
+        if (members[i].id == memberID)
+            memberFound = true;
+    }
+
+    for (int i = 0; i < books.size(); i++)
+    {
+        if (books[i].id == bookID)
+        {
+            bookFound = true;
+
+            if (books[i].issuedTo != 0)
+            {
+                cout << "\nBook Already Issued!\n";
+                return;
+            }
+
+            if (!memberFound)
+            {
+                cout << "\nMember Not Found!\n";
+                return;
+            }
+
+            books[i].issuedTo = memberID;
+
+            saveBooks(books);
+
+            cout << "\nBook Issued Successfully!\n";
+            return;
+        }
+    }
+
+    if (!bookFound)
+        cout << "\nBook Not Found!\n";
+}
+
+// Return Book
+void returnBook()
+{
+    vector<Book> books = loadBooks();
+
+    int bookID;
+
+    cout << "\nEnter Book ID: ";
+    cin >> bookID;
+
+    for (int i = 0; i < books.size(); i++)
+    {
+        if (books[i].id == bookID)
+        {
+            if (books[i].issuedTo == 0)
+            {
+                cout << "\nBook Is Already Available!\n";
+                return;
+            }
+
+            books[i].issuedTo = 0;
+
+            saveBooks(books);
+
+            cout << "\nBook Returned Successfully!\n";
+            return;
+        }
+    }
+
+    cout << "\nBook Not Found!\n";
+}
+
+// Search Book
+void searchBook()
+{
+    vector<Book> books = loadBooks();
+
+    string keyword;
+    bool found = false;
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    cout << "\nEnter Book Title or Author: ";
+    getline(cin, keyword);
+
+    for (int i = 0; i < books.size(); i++)
+    {
+        if (books[i].title.find(keyword) != string::npos ||
+            books[i].author.find(keyword) != string::npos)
+        {
+            cout << "\nBook ID: " << books[i].id;
+            cout << "\nTitle: " << books[i].title;
+            cout << "\nAuthor: " << books[i].author;
+
+            if (books[i].issuedTo == 0)
+                cout << "\nStatus: Available\n";
+            else
+                cout << "\nStatus: Issued\n";
+
+            found = true;
+        }
+    }
+
+    if (!found)
+        cout << "\nBook Not Found!\n";
+}
+
+// Main Function
+int main()
+{
+    int choice;
+
+    do
+    {
+        cout << "\n====================================";
+        cout << "\n       LIBRARY MANAGEMENT SYSTEM";
+        cout << "\n====================================";
+
+        cout << "\n1. Add Book";
+        cout << "\n2. Add Member";
+        cout << "\n3. Display Books";
+        cout << "\n4. Issue Book";
+        cout << "\n5. Return Book";
+        cout << "\n6. Search Book";
+        cout << "\n7. Exit";
+
+        cout << "\n====================================";
+
+        cout << "\nEnter Your Choice: ";
+        cin >> choice;
+
+        switch (choice)
+        {
+            case 1:
+                addBook();
+                break;
+
+            case 2:
+                addMember();
+                break;
+
+            case 3:
+                displayBooks();
+                break;
+
+            case 4:
+                issueBook();
+                break;
+
+            case 5:
+                returnBook();
+                break;
+
+            case 6:
+                searchBook();
+                break;
+
+            case 7:
+                cout << "\nThank You!\n";
+                break;
+
+            default:
+                cout << "\nInvalid Choice!\n";
+        }
+
+    } while (choice != 7);
+
+    return 0;
+}
